@@ -1,0 +1,44 @@
+# @prettier
+
+name: Linting and Unit Testing
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+      - staging
+  push:
+    branches:
+      - develop
+      - main
+      - stage
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+    steps:
+      - name: Get repository code
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Restoring npm cache
+        uses: actions/cache@v2
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Installing packages
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: ESLint and Stylelint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test:unit
